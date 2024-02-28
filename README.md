@@ -42,7 +42,6 @@ engine = FastRabbitEngine(amqp_url="amqp://user:password@localhost/")
 async def handle_message(body: str):
     print(f"Received message: {body}")
 
-
 await engine.run()
 ```
 
