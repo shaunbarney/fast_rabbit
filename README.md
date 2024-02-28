@@ -50,11 +50,11 @@ await engine.run()
 
 ## Documentation
 
-For more detailed documentation, including API reference and advanced usage, please refer to the [Fast Rabbit Documentation](#).
+For more detailed documentation, including API reference and advanced usage, please refer to the [Fast Rabbit Documentation](./documentation/DOCUMENTATION.md).
 
 ## Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on how to submit pull requests, report issues, and suggest improvements.
+Contributions are welcome! Please read our [Contributing Guide](./documentation/CONTRIBUTING.md) for details on how to submit pull requests, report issues, and suggest improvements.
 
 ## License
 
