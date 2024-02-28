@@ -37,13 +37,11 @@ Define your message handlers and register them as consumers for specific queues:
 from fast_rabbit import FastRabbitEngine, FastRabbitRouter
 
 engine = FastRabbitEngine(amqp_url="amqp://user:password@localhost/")
-router = FastRabbitRouter()
 
 @router.route("queue_name")
 async def handle_message(body: str):
     print(f"Received message: {body}")
 
-engine.include_subscriptions(router)
 
 await engine.run()
 ```
