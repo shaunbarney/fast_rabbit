@@ -14,7 +14,7 @@ Fast Rabbit is an advanced, asynchronous RabbitMQ client designed to simplify th
 Install Fast Rabbit using pip:
 
 ```bash
-pip install fast_rabbit
+pip install fast-rabbit
 ```
 
 ## Quick Start
