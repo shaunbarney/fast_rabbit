@@ -1,0 +1,6 @@
+aio-pika==9.4.0
+aiormq==6.8.0
+idna==3.6
+multidict==6.0.5
+pamqp==3.3.0
+yarl==1.9.4
