@@ -38,7 +38,7 @@ from fast_rabbit import FastRabbitEngine, FastRabbitRouter
 
 engine = FastRabbitEngine(amqp_url="amqp://user:password@localhost/")
 
-@router.route("queue_name")
+@engine.subscribe("queue_name")
 async def handle_message(body: str):
     print(f"Received message: {body}")
 
