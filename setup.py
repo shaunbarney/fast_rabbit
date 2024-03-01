@@ -2,9 +2,17 @@ from setuptools import setup, find_packages
 
 setup(
     name="fast_rabbit",
-    version="0.1.0",
+    version="0.1.1",
     packages=find_packages(),
-    install_requires=["aio_pika", "aiormq", "idna", "multidict", "pamqp", "yarl"],
+    install_requires=[
+        "aio_pika",
+        "aiormq",
+        "idna",
+        "multidict",
+        "pamqp",
+        "yarl",
+        "asyncio",
+    ],
     python_requires=">=3.9",
     author="Shaun James Barney",
     author_email="shaunbarney@outlook.com",

@@ -1,10 +1,18 @@
+import inspect
 import asyncio
+from pydantic import BaseModel, parse_raw_as
 from aio_pika.exceptions import AMQPException
-from aio_pika.abc import AbstractQueue, AbstractChannel, AbstractConnection
 from aio_pika import connect_robust, Message, DeliveryMode
+from aio_pika.abc import (
+    AbstractIncomingMessage,
+    AbstractQueue,
+    AbstractChannel,
+    AbstractConnection,
+)
 
-from . import logger
-from .fast_rabbit_router import FastRabbitRouter
+from fast_rabbit import logger
+from fast_rabbit.utils import serialise_data
+from fast_rabbit.fast_rabbit_router import FastRabbitRouter
 
 from typing import Callable, Awaitable, Any, Dict, Optional
 
@@ -70,26 +78,26 @@ class FastRabbitEngine:
                 self.channels["default"] = channel
                 return channel
 
-    async def publish(self, queue_name: str, body: str, priority: int = 0) -> None:
-        """Asynchronously publishes a message to a specified queue with optional priority, ensuring message persistence and leveraging the default exchange for routing.
+    async def publish(self, queue_name: str, data: Any, priority: int = 0) -> None:
+        """Publishes a message to a specified queue with optional priority.
 
         Args:
             queue_name (str): The name of the queue to publish the message to.
-            body (str): The message body as a string.
+            data (Any): The message data, supporting Pydantic models or any serializable type.
             priority (int, optional): The priority of the message. Defaults to 0.
-
-        Raises:
-            AMQPException: If message publishing fails, an exception raised
         """
         channel = await self._get_channel()
         try:
             queue = await channel.declare_queue(queue_name, durable=True)
+            _ = queue  # Suppresses unused variable warning
         except AMQPException as e:
             logger.error(f"Failed to declare queue for publishing: {e}")
             raise
 
+        # Serialize data based on its type
+        message_body = serialise_data(data).encode()
         message = Message(
-            body.encode(), delivery_mode=DeliveryMode.PERSISTENT, priority=priority
+            message_body, delivery_mode=DeliveryMode.PERSISTENT, priority=priority
         )
         try:
             await channel.default_exchange.publish(message, routing_key=queue_name)
@@ -97,61 +105,103 @@ class FastRabbitEngine:
             logger.error(f"Failed to publish message to {queue_name}: {e}")
             raise
 
-    def subscribe(
-        self, queue_name: str
-    ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Any]]:
-        """Decorator for registering a coroutine as a consumer for a specified queue. This registration facilitates asynchronous message consumption by invoking the decorated coroutine with the message body as its argument.
+    def subscribe(self, queue_name: str):
+        """Decorator for registering a coroutine as a consumer for a specified queue.
 
         Args:
             queue_name (str): The name of the queue for which the consumer is registered.
 
         Returns:
-            Callable[[Callable[..., Awaitable[Any]]], Callable[..., Any]]: The original coroutine, allowing for potential further decoration.
+            Callable: The decorator function.
         """
 
         def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Any]:
-            self.subscriptions[queue_name] = func
+            # Inspect the function's parameters to see if a Pydantic model is expected
+            params = inspect.signature(func).parameters
+            model_type = None
+            for param in params.values():
+                # Check if the parameter is annotated with a Pydantic BaseModel
+                if issubclass(param.annotation, BaseModel):
+                    model_type = param.annotation
+                    break
+
+            async def wrapper(message_body: str):
+                # If a Pydantic model is expected, parse the message body into that model
+                if model_type:
+                    try:
+                        data = parse_raw_as(model_type, message_body)
+                    except Exception as e:
+                        logger.error(
+                            f"Error parsing message into model {model_type}: {e}"
+                        )
+                        return
+                else:
+                    # Otherwise, pass the message body as is
+                    data = message_body
+
+                await func(data)
+
+            self.subscriptions[queue_name] = wrapper
             return func
 
         return decorator
 
-    async def start_consumers(self) -> None:
-        """Asynchronously starts all registered consumer coroutines, each consuming messages from its respective queue. Logs a warning if no subscriptions are registered."""
-        if not self.subscriptions:
-            return
-        for queue_name, consumer in self.subscriptions.items():
-            await self._start_consumer(queue_name, consumer)
-
     async def _start_consumer(
         self, queue_name: str, consumer: Callable[..., Awaitable[Any]]
     ) -> None:
-        """Asynchronously declares a durable queue and starts consuming messages from it using the provided consumer coroutine.
+        """Starts a message consumer coroutine for a specified queue.
+
+        This method declares a durable queue and begins consuming messages from it, using the provided
+        consumer coroutine for message processing. It automatically handles message deserialization based on
+        the consumer function's parameter annotations, supporting dynamic data types including Pydantic models.
 
         Args:
             queue_name (str): The name of the queue from which to consume messages.
-            consumer (Callable[..., Awaitable[Any]]): The coroutine to process each message.
+            consumer (Callable[..., Awaitable[Any]]): A coroutine that processes each message.
 
         Raises:
-            AMQPException: If declaring the queue or starting the consumer fails, an exception is logged and raised.
+            AMQPException: If an error occurs during queue declaration or message consumption.
         """
         channel = await self._get_channel()
         try:
             queue: AbstractQueue = await channel.declare_queue(queue_name, durable=True)
-        except AMQPException:
-            logger.error(f"Failed to declare queue for consumer {queue_name}.")
+        except AMQPException as e:
+            logger.error(f"Failed to declare queue '{queue_name}': {e}")
             raise
 
+        # Determine the expected parameter type for the consumer function
+        params = inspect.signature(consumer).parameters
+        model_type = None
+        for param in params.values():
+            if issubclass(param.annotation, BaseModel):
+                model_type = param.annotation
+                break
+
         async def message_handler(message: AbstractIncomingMessage) -> None:
+            """Processes incoming messages, deserializing them as needed."""
             async with message.process():
-                await consumer(message.body.decode())
+                try:
+                    if model_type:
+                        data = parse_raw_as(model_type, message.body.decode())
+                    else:
+                        data = message.body.decode()
+                except Exception as e:
+                    logger.error(f"Error deserializing message for '{queue_name}': {e}")
+                    return
+
+                try:
+                    await consumer(data)
+                except Exception as e:
+                    logger.error(f"Error processing message for '{queue_name}': {e}")
+                    # Handle or log the error as needed
 
         try:
             await queue.consume(message_handler)
         except AMQPException as e:
-            logger.error(f"Failed to start consumer for {queue_name}: {e}")
+            logger.error(f"Failed to start consumer for '{queue_name}': {e}")
             raise
         else:
-            logger.info(f"Started consuming from {queue_name}.")
+            logger.info(f"Consumer started for queue '{queue_name}'.")
 
     def include_subscriptions(self, router: FastRabbitRouter) -> None:
         """Includes the routes from a RabbitMQRouter instance in the current RabbitMQEngine instance.
@@ -162,7 +212,12 @@ class FastRabbitEngine:
         for queue_name, handler in router.routes.items():
             self.subscriptions[queue_name] = handler
 
+    async def _start_consumers(self) -> None:
+        """Starts message consumers for all registered queues."""
+        for queue_name, consumer in self.subscriptions.items():
+            await self._start_consumer(queue_name, consumer)
+
     async def run(self) -> None:
         """Initiates the message consuming process for all registered queues and enters an indefinite wait state."""
-        await self.start_consumers()
+        await self._start_consumers()
         await asyncio.Event().wait()
