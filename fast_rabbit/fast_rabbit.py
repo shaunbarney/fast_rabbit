@@ -106,37 +106,40 @@ class FastRabbitEngine:
             raise
 
     def subscribe(self, queue_name: str):
-        """Decorator for registering a coroutine as a consumer for a specified queue.
+        """
+        A decorator for registering a coroutine as a consumer for a specified queue. This method
+        inspects the coroutine's parameters to determine if a Pydantic model is expected. If so,
+        it automatically deserializes incoming messages into that model before passing them to the
+        coroutine.
 
         Args:
             queue_name (str): The name of the queue for which the consumer is registered.
 
         Returns:
-            Callable: The decorator function.
+            Callable: A decorator function that takes a coroutine, wraps it to include automatic
+            deserialization of messages, and registers the wrapped coroutine as a consumer for the
+            specified queue.
         """
 
         def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Any]:
-            # Inspect the function's parameters to see if a Pydantic model is expected
             params = inspect.signature(func).parameters
             model_type = None
             for param in params.values():
-                # Check if the parameter is annotated with a Pydantic BaseModel
                 if issubclass(param.annotation, BaseModel):
                     model_type = param.annotation
                     break
 
             async def wrapper(message_body: str):
-                # If a Pydantic model is expected, parse the message body into that model
+                """Internal wrapper function to deserialize message before passing to the consumer."""
                 if model_type:
                     try:
-                        data = parse_raw_as(model_type, message_body)
+                        data = model_type.parse_raw(message_body)
                     except Exception as e:
                         logger.error(
                             f"Error parsing message into model {model_type}: {e}"
                         )
                         return
                 else:
-                    # Otherwise, pass the message body as is
                     data = message_body
 
                 await func(data)
@@ -148,12 +151,12 @@ class FastRabbitEngine:
 
     async def _start_consumer(
         self, queue_name: str, consumer: Callable[..., Awaitable[Any]]
-    ) -> None:
-        """Starts a message consumer coroutine for a specified queue.
-
-        This method declares a durable queue and begins consuming messages from it, using the provided
-        consumer coroutine for message processing. It automatically handles message deserialization based on
-        the consumer function's parameter annotations, supporting dynamic data types including Pydantic models.
+    ):
+        """
+        Starts a message consumer coroutine for a specified queue. This method declares a durable
+        queue and begins consuming messages from it, using the provided consumer coroutine for
+        message processing. It automatically handles message deserialization based on the consumer
+        function's parameter annotations, supporting dynamic data types including Pydantic models.
 
         Args:
             queue_name (str): The name of the queue from which to consume messages.
@@ -169,7 +172,6 @@ class FastRabbitEngine:
             logger.error(f"Failed to declare queue '{queue_name}': {e}")
             raise
 
-        # Determine the expected parameter type for the consumer function
         params = inspect.signature(consumer).parameters
         model_type = None
         for param in params.values():
@@ -177,12 +179,17 @@ class FastRabbitEngine:
                 model_type = param.annotation
                 break
 
-        async def message_handler(message: AbstractIncomingMessage) -> None:
-            """Processes incoming messages, deserializing them as needed."""
+        async def message_handler(message: AbstractIncomingMessage):
+            """
+            Processes incoming messages, deserializing them as needed before passing to the consumer.
+
+            Args:
+                message (AbstractIncomingMessage): The incoming message from the queue.
+            """
             async with message.process():
                 try:
                     if model_type:
-                        data = parse_raw_as(model_type, message.body.decode())
+                        data = model_type.parse_raw(message.body.decode())
                     else:
                         data = message.body.decode()
                 except Exception as e:
