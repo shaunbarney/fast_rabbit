@@ -1,6 +1,7 @@
 import inspect
 import asyncio
-from pydantic import BaseModel, parse_raw_as
+import logging
+from pydantic import BaseModel
 from aio_pika.exceptions import AMQPException
 from aio_pika import connect_robust, Message, DeliveryMode
 from aio_pika.abc import (
@@ -10,11 +11,15 @@ from aio_pika.abc import (
     AbstractConnection,
 )
 
-from fast_rabbit import logger
 from fast_rabbit.utils import serialise_data
 from fast_rabbit.fast_rabbit_router import FastRabbitRouter
 
 from typing import Callable, Awaitable, Any, Dict, Optional
+
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 
 class FastRabbitEngine:
