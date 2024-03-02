@@ -26,7 +26,7 @@ import asyncio
 from fast_rabbit import FastRabbitEngine
 
 
-RABBIT_MQ_URL = "amqp://user:password@rabbitmq"
+RABBIT_MQ_URL = "amqp://user:password@localhost"
 fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
 
 async def run_producer():
@@ -48,7 +48,7 @@ import asyncio
 from fast_rabbit import FastRabbitEngine
 
 
-RABBIT_MQ_URL = "amqp://user:password@rabbitmq"
+RABBIT_MQ_URL = "amqp://user:password@localhost"
 fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
 
 @fast_rabbit.subscribe("test_queue")
