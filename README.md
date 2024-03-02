@@ -28,9 +28,7 @@ from fast_rabbit import FastRabbitEngine
 
 
 RABBIT_MQ_URL = "amqp://user:password@rabbitmq"
-
 fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
-
 
 async def run_producer():
     for i in range(10):
@@ -52,9 +50,7 @@ from fast_rabbit import FastRabbitEngine
 
 
 RABBIT_MQ_URL = "amqp://user:password@rabbitmq"
-
 fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
-
 
 @fast_rabbit.subscribe("test_queue")
 async def test_consumer(message: str):
