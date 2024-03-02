@@ -22,11 +22,24 @@ pip install fast_rabbit
 ### Publishing Messages
 
 ```python
+import logging
+import asyncio
 from fast_rabbit import FastRabbitEngine
 
-engine = FastRabbitEngine(amqp_url="amqp://user:password@localhost/")
 
-await engine.publish("queue_name", "Hello, RabbitMQ!")
+RABBIT_MQ_URL = "amqp://user:password@rabbitmq"
+
+fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
+
+
+async def run_producer():
+    for i in range(10):
+        await fast_rabbit.publish("test_queue", f"Message {i}")
+        print(f"Published message {i}")
+
+
+if __name__ == "__main__":
+    asyncio.run(run_producer())
 ```
 
 ### Consuming Messages
@@ -34,15 +47,26 @@ await engine.publish("queue_name", "Hello, RabbitMQ!")
 Define your message handlers and register them as consumers for specific queues:
 
 ```python
-from fast_rabbit import FastRabbitEngine, FastRabbitRouter
+import asyncio
+from fast_rabbit import FastRabbitEngine
 
-engine = FastRabbitEngine(amqp_url="amqp://user:password@localhost/")
 
-@engine.subscribe("queue_name")
-async def handle_message(body: str):
-    print(f"Received message: {body}")
+RABBIT_MQ_URL = "amqp://user:password@rabbitmq"
 
-await engine.run()
+fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
+
+
+@fast_rabbit.subscribe("test_queue")
+async def test_consumer(message: str):
+    print(f"Received message: {message}")
+
+
+async def main():
+    await fast_rabbit.run()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Documentation
