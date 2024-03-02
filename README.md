@@ -56,12 +56,8 @@ async def test_consumer(message: str):
     print(f"Received message: {message}")
 
 
-async def main():
-    await fast_rabbit.run()
-
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(fast_rabbit.run())
 ```
 
 ## Documentation
