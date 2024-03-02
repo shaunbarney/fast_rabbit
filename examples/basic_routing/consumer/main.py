@@ -1,0 +1,30 @@
+import logging
+import asyncio
+from fast_rabbit import FastRabbitEngine
+
+from router.router import router
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+RABBIT_MQ_URL = "amqp://user:password@rabbitmq"
+
+
+fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
+
+# Include subscriptions from the router
+fast_rabbit.include_subscriptions(router)
+
+
+@fast_rabbit.subscribe("test_queue")
+async def test_consumer(message: str):
+    logger.info(f"Received message: {message}")
+
+
+async def main():
+    logger.info("Starting consumer")
+    await fast_rabbit.run()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
