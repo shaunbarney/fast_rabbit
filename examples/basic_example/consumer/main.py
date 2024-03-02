@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 RABBIT_MQ_URL = "amqp://user:password@rabbitmq"
 
+
 fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
 
 
@@ -17,6 +18,7 @@ async def test_consumer(message: str):
 
 
 async def main():
+    logger.info("Starting consumer")
     await fast_rabbit.run()
 
 

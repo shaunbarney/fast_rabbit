@@ -16,6 +16,8 @@ services:
     build:
       context: ./producer
       dockerfile: Dockerfile
+    volumes:
+      - ./producer:/usr/src/app
     depends_on:
       - rabbitmq
 
@@ -23,6 +25,8 @@ services:
     build:
       context: ./consumer
       dockerfile: Dockerfile
+    volumes:
+      - ./consumer:/usr/src/app
     depends_on:
       - rabbitmq
 

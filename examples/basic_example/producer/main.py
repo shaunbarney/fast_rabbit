@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 RABBIT_MQ_URL = "amqp://user:password@rabbitmq"
 
+
 fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
 
 
