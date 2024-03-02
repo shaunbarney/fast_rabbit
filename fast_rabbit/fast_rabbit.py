@@ -56,12 +56,17 @@ class FastRabbitEngine:
         Returns:
             AbstractConnection: An active, robust connection to the RabbitMQ server.
         """
-        if self.connection is None or self.connection.is_closed:
-            try:
-                self.connection = await connect_robust(self.amqp_url)
-            except AMQPException as e:
-                logger.error(f"Failed to connect to RabbitMQ: {e}")
-                raise
+        while True:
+            if self.connection is None or self.connection.is_closed:
+                try:
+                    self.connection = await connect_robust(self.amqp_url)
+                except AMQPException as e:
+                    logger.error(
+                        f"Failed to connect to RabbitMQ: {e}. Retrying in 1 second..."
+                    )
+                    await asyncio.sleep(1)
+            else:
+                break
         return self.connection
 
     async def _get_channel(self) -> AbstractChannel:
