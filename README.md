@@ -22,7 +22,6 @@ pip install fast_rabbit
 ### Publishing Messages
 
 ```python
-import logging
 import asyncio
 from fast_rabbit import FastRabbitEngine
 
