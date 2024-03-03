@@ -7,6 +7,6 @@ logger = logging.getLogger(__name__)
 router = FastRabbitRouter()
 
 
-@router.route("example_router_queue")
+@router.subscribe("example_router_queue")
 async def example_router_queue(message: str):
     logging.info(f"Router received message: {message}")
