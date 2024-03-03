@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    ports:
+      - "5672:5672"  # AMQP protocol
+      - "15672:15672"  # Management interface
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  producer:
+    build:
+      context: ./producer
+      dockerfile: Dockerfile
+    volumes:
+      - ./producer:/usr/src/app
+    depends_on:
+      - rabbitmq
+
+  consumer:
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile
+    volumes:
+      - ./consumer:/usr/src/app
+    depends_on:
+      - rabbitmq
+
+volumes:
+  rabbitmq_data:
