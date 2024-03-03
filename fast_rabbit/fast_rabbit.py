@@ -23,32 +23,56 @@ logger = logging.getLogger(__name__)
 
 
 class FastRabbitEngine:
-    """A class for managing RabbitMQ interactions asynchronously, enhancing robustness and efficiency.
+    """Manages RabbitMQ interactions asynchronously, enhancing robustness and efficiency.
 
-    This class abstracts the complexity of handling RabbitMQ connections, channels, and consumer
-    registration, providing an asynchronous API to publish messages and start message consuming
-    workers based on registered callbacks.
+    This class implements the Singleton pattern to ensure only one instance manages
+    the RabbitMQ connections, channels, and consumer registration. It provides an
+    asynchronous API to publish messages and start message consuming workers based
+    on registered callbacks.
 
     Attributes:
         amqp_url (str): The AMQP URL used to establish a connection to the RabbitMQ server.
-        subscriptions (Dict[str, Callable[..., Awaitable[Any]]]): Maps queue names to their respective
-            consumer coroutine functions, facilitating message processing.
-        connection (Optional[AbstractConnection]): Maintains a robust connection instance to the RabbitMQ server,
-            automatically reconnecting if necessary.
-        channels (Dict[str, AbstractChannel]): Caches channels for reuse, keyed by a descriptive name, with
-            'default' being used for the primary channel.
+        subscriptions (Dict[str, Callable[..., Awaitable[Any]]]): Maps queue names to their
+            respective consumer coroutine functions, facilitating message processing.
+        connection (Optional[AbstractConnection]): Maintains a robust connection instance to
+            the RabbitMQ server, automatically reconnecting if necessary.
+        channels (Dict[str, AbstractChannel]): Caches channels for reuse, keyed by a descriptive
+            name, with 'default' being used for the primary channel.
     """
 
-    def __init__(self, amqp_url: str) -> None:
-        """Initialises the RabbitMQEngine instance with the given AMQP URL.
+    _instance = None
+
+    def __new__(cls, amqp_url: Optional[str] = None):
+        """Ensures only one instance of FastRabbitEngine is created.
 
         Args:
-            amqp_url (str): The AMQP URL to connect to the RabbitMQ server.
+            amqp_url (str): The AMQP URL to connect to the RabbitMQ server. Required for the
+                first instantiation of the class.
+
+        Returns:
+            The singleton instance of FastRabbitEngine.
         """
-        self.amqp_url: str = amqp_url
-        self.subscriptions: Dict[str, Callable[..., Awaitable[Any]]] = {}
-        self.connection: Optional[AbstractConnection] = None
-        self.channels: Dict[str, AbstractChannel] = {}
+        if cls._instance is None:
+            instance = super(FastRabbitEngine, cls).__new__(cls)
+            instance._initialised = False
+            cls._instance = instance
+        return cls._instance
+
+    def __init__(self, amqp_url: Optional[str] = None):
+        """Initialises the FastRabbitEngine instance, if not already initialised.
+
+        Args:
+            amqp_url (str, optional): The AMQP URL to connect to the RabbitMQ server. Required
+                for the first instantiation of the class. Defaults to None.
+        """
+        if not self._initialised:
+            if amqp_url is None:
+                raise ValueError("AMQP URL must be provided for initialisation.")
+            self.amqp_url = amqp_url
+            self.subscriptions: Dict[str, Callable[..., Awaitable[Any]]] = {}
+            self.connection: Optional[AbstractConnection] = None
+            self.channels: Dict[str, AbstractChannel] = {}
+            self._initialised = True
 
     async def _get_connection(self) -> AbstractConnection:
         """Obtains a robust connection to the RabbitMQ server, creating a new connection if none exists or the existing one is closed.
@@ -93,7 +117,7 @@ class FastRabbitEngine:
 
         Args:
             queue_name (str): The name of the queue to publish the message to.
-            data (Any): The message data, supporting Pydantic models or any serializable type.
+            data (Any): The message data, supporting Pydantic models or any serialisable type.
             priority (int, optional): The priority of the message. Defaults to 0.
         """
         channel = await self._get_channel()
@@ -104,7 +128,7 @@ class FastRabbitEngine:
             logger.error(f"Failed to declare queue for publishing: {e}")
             raise
 
-        # Serialize data based on its type
+        # Serialise data based on its type
         message_body = serialise_data(data).encode()
         message = Message(
             message_body, delivery_mode=DeliveryMode.PERSISTENT, priority=priority
@@ -119,7 +143,7 @@ class FastRabbitEngine:
         """
         A decorator for registering a coroutine as a consumer for a specified queue. This method
         inspects the coroutine's parameters to determine if a Pydantic model is expected. If so,
-        it automatically deserializes incoming messages into that model before passing them to the
+        it automatically deserialises incoming messages into that model before passing them to the
         coroutine.
 
         Args:
@@ -127,7 +151,7 @@ class FastRabbitEngine:
 
         Returns:
             Callable: A decorator function that takes a coroutine, wraps it to include automatic
-            deserialization of messages, and registers the wrapped coroutine as a consumer for the
+            deserialisation of messages, and registers the wrapped coroutine as a consumer for the
             specified queue.
         """
 
@@ -140,7 +164,7 @@ class FastRabbitEngine:
                     break
 
             async def wrapper(message_body: str):
-                """Internal wrapper function to deserialize message before passing to the consumer."""
+                """Internal wrapper function to deserialise message before passing to the consumer."""
                 if model_type:
                     try:
                         data = model_type.parse_raw(message_body)
@@ -165,7 +189,7 @@ class FastRabbitEngine:
         """
         Starts a message consumer coroutine for a specified queue. This method declares a durable
         queue and begins consuming messages from it, using the provided consumer coroutine for
-        message processing. It automatically handles message deserialization based on the consumer
+        message processing. It automatically handles message deserialisation based on the consumer
         function's parameter annotations, supporting dynamic data types including Pydantic models.
 
         Args:
@@ -191,7 +215,7 @@ class FastRabbitEngine:
 
         async def message_handler(message: AbstractIncomingMessage):
             """
-            Processes incoming messages, deserializing them as needed before passing to the consumer.
+            Processes incoming messages, deserialising them as needed before passing to the consumer.
 
             Args:
                 message (AbstractIncomingMessage): The incoming message from the queue.
@@ -203,7 +227,7 @@ class FastRabbitEngine:
                     else:
                         data = message.body.decode()
                 except Exception as e:
-                    logger.error(f"Error deserializing message for '{queue_name}': {e}")
+                    logger.error(f"Error deserialising message for '{queue_name}': {e}")
                     return
 
                 try:
@@ -226,7 +250,7 @@ class FastRabbitEngine:
         Args:
             router (RabbitMQRouter): The router instance containing the routes to include.
         """
-        for queue_name, handler in router.routes.items():
+        for queue_name, handler in router.subscriptions.items():
             self.subscriptions[queue_name] = handler
 
     async def _start_consumers(self) -> None:
