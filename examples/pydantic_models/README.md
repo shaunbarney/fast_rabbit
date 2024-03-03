@@ -1,54 +1,67 @@
-# Basic Example Documentation
+# Advanced Messaging with Pydantic Models and Fast RabbitMQ
 
 ## Overview
 
-This documentation covers the setup and operation of a basic messaging system using RabbitMQ with a producer and consumer model. The system is containerised using Docker, facilitating easy deployment and scalability. The example demonstrates how to send messages from a producer service to a RabbitMQ queue, which are then consumed by a consumer service.
+This documentation details an advanced messaging system that leverages Pydantic models for data validation and type safety in a producer-consumer setup using Fast RabbitMQ. The system demonstrates how Pydantic models defined in the producer can be seamlessly used in the consumer's function signature, allowing for dynamic casting of message data to usable Python objects. This approach ensures that data passed through RabbitMQ queues is strongly typed and conforms to the expected structure, enhancing the robustness and reliability of the application.
 
-## Prerequisites
+## System Components
 
-- Docker and Docker Compose installed on your machine.
-- Basic understanding of Docker, Python, and asynchronous programming.
+### Pydantic Models
 
-## Architecture
+Pydantic models play a central role in this system by defining the data schema for messages. These models ensure that data conforms to a specified format, providing automatic data validation and error handling for messages in transit.
 
-The system comprises three main components:
+#### User Model
 
-1. **RabbitMQ Server**: A RabbitMQ service with management interface enabled.
-2. **Producer**: A Python application that publishes messages to a RabbitMQ queue.
-3. **Consumer**: A Python application that subscribes to the RabbitMQ queue and processes messages.
+```python
+from pydantic import BaseModel
 
-## Docker Configuration
+class User(BaseModel):
+    name: str
+    age: int
+```
 
-The `docker-compose.yml` file defines the services, networks, and volumes for our application:
+- **Description**: Defines a user with a name and age.
+- **Usage**: Used by both the producer and consumer to ensure consistent data structure and validation.
 
-- **RabbitMQ Service**: Configured with default user credentials and exposes ports for AMQP protocol and management interface. A named volume `rabbitmq_data` is used for data persistence.
-- **Producer and Consumer Services**: Both are built from Dockerfiles located in their respective directories. They depend on the RabbitMQ service being available and mount their source code directories into the container for live editing.
+### Producer
 
-### Volumes
+The producer is responsible for creating and sending messages that conform to the Pydantic model.
 
-- `rabbitmq_data`: Persists RabbitMQ data across container restarts.
+#### Key Features
 
-## Producer Service
+- **Random User Generation**: Dynamically creates instances of the `User` model with random data.
+- **Message Publishing**: Sends instances of the `User` model to a specified RabbitMQ queue.
 
-The producer service sends a series of messages to a specified queue in RabbitMQ.
+#### Implementation Highlights
 
-### Key Components
+```python
+async def run_producer():
+    for i in range(10):
+        user = create_random_user()
+        await fast_rabbit.publish("user", user.json())  # Publishing as JSON
+        logger.info(f"Published user {user.name} with age {user.age}")
+```
 
-- **FastRabbitEngine**: A custom Python class (assumed) for interacting with RabbitMQ.
-- **run_producer**: An asynchronous function that publishes messages to the `test_queue`.
+- **Dynamic Casting**: The `User` instance is converted to JSON for transmission. The consumer will receive this JSON and dynamically cast it back to a `User` object.
 
-### Operation
+### Consumer
 
-The script connects to RabbitMQ using the provided URL, then enters a loop to publish ten messages to `test_queue`, logging each message sent.
+The consumer subscribes to the RabbitMQ queue, receives messages, and processes them using the Pydantic model directly in the function signature.
 
-## Consumer Service
+#### Key Features
 
-The consumer service listens for messages on the specified queue and processes them as they arrive.
+- **Dynamic Message Casting**: Automatically converts incoming messages to Pydantic model instances.
+- **Data Processing**: Implements business logic on the validated and typed data.
 
-### Key Components
+#### Implementation Highlights
 
-- **FastRabbitEngine**: Utilised for setting up a subscription to RabbitMQ.
-- **test_consumer**: An asynchronous callback function that processes each message received from `test_queue`.
+```python
+@fast_rabbit.subscribe("user")
+async def user_consumer(user: User):
+    logger.info(f"Received user {user.name} with age {user.age}")
+```
+
+- **Automatic Conversion**: The `fast_rabbit.subscribe` decorator and Fast RabbitMQ engine handle the dynamic casting of JSON messages to the `User` model, allowing the function to directly use the `User` instance.
 
 ### Operation
 
@@ -62,7 +75,15 @@ Upon starting, the consumer logs its initiation, then runs indefinitely, process
    ```
 2. Monitor the logs to see the messages being produced and consumed.
 
+## Benefits and Considerations
+
+- **Type Safety**: Ensures that all messages conform to the defined data model, reducing runtime errors.
+- **Data Validation**: Leverages Pydantic's validation mechanisms to ensure data integrity.
+- **Ease of Use**: Simplifies the producer and consumer code by abstracting data serialisation and deserialisation.
+- **Flexibility**: Supports complex data structures and validations through Pydantic's extensive features.
+
 ## Conclusion
 
-This basic example demonstrates a simple but effective pattern for asynchronous message processing with RabbitMQ in a Dockerised environment. It showcases the power of combining Docker, RabbitMQ, and Python's asynchronous capabilities for building scalable and efficient messaging systems.
+Utilising Pydantic models in conjunction with Fast RabbitMQ provides a powerful pattern for building reliable and scalable messaging systems in Python. This approach not only enforces data integrity and type safety but also simplifies the development process by automating data conversion and validation tasks.
+
 
