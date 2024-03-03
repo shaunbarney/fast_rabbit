@@ -1,7 +1,6 @@
 import inspect
 import logging
 from pydantic import BaseModel
-from .fast_rabbit import FastRabbitEngine
 
 from typing import Awaitable, Callable, Dict, Any
 
@@ -87,6 +86,8 @@ class FastRabbitRouter:
             data (Any): The message data, which can be a Pydantic model or any serialisable type.
             priority (int, optional): The priority of the message, with 0 as the default.
         """
+        from fast_rabbit import FastRabbitEngine
+
         engine = (
             FastRabbitEngine()
         )  # Assumes FastRabbitEngine manages its singleton instance

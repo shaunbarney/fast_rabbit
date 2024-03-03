@@ -117,7 +117,7 @@ class FastRabbitEngine:
 
         Args:
             queue_name (str): The name of the queue to publish the message to.
-            data (Any): The message data, supporting Pydantic models or any serialisable type.
+            data (Any): The message data, supporting Pydantic models or any serializable type.
             priority (int, optional): The priority of the message. Defaults to 0.
         """
         channel = await self._get_channel()
@@ -128,8 +128,13 @@ class FastRabbitEngine:
             logger.error(f"Failed to declare queue for publishing: {e}")
             raise
 
-        # Serialise data based on its type
-        message_body = serialise_data(data).encode()
+        # Check if data is a Pydantic model and serialize accordingly
+        if isinstance(data, BaseModel):
+            message_body = data.json().encode()
+        else:
+            # Fallback to your existing serialization method if not a Pydantic model
+            message_body = serialise_data(data).encode()
+
         message = Message(
             message_body, delivery_mode=DeliveryMode.PERSISTENT, priority=priority
         )
@@ -262,3 +267,25 @@ class FastRabbitEngine:
         """Initiates the message consuming process for all registered queues and enters an indefinite wait state."""
         await self._start_consumers()
         await asyncio.Event().wait()
+
+    async def shutdown(self) -> None:
+        """Gracefully shuts down all channels and the connection to RabbitMQ."""
+        # Close all channels
+        for channel_name, channel in self.channels.items():
+            if not channel.is_closed:
+                try:
+                    await channel.close()
+                    logger.info(f"Channel '{channel_name}' closed successfully.")
+                except AMQPException as e:
+                    logger.error(f"Failed to close channel '{channel_name}': {e}")
+
+        # Close the connection
+        if self.connection and not self.connection.is_closed:
+            try:
+                await self.connection.close()
+                logger.info("Connection to RabbitMQ closed successfully.")
+            except AMQPException as e:
+                logger.error(f"Failed to close connection to RabbitMQ: {e}")
+
+        # Clear channels cache
+        self.channels.clear()
