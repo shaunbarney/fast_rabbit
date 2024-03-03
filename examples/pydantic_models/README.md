@@ -38,7 +38,7 @@ The producer is responsible for creating and sending messages that conform to th
 async def run_producer():
     for i in range(10):
         user = create_random_user()
-        await fast_rabbit.publish("user", user.json())  # Publishing as JSON
+        await fast_rabbit.publish("user", user)) 
         logger.info(f"Published user {user.name} with age {user.age}")
 ```
 
