@@ -60,6 +60,63 @@ if __name__ == "__main__":
     asyncio.run(fast_rabbit.run())
 ```
 
+## Example Upgrade
+
+### Publish Message
+
+```python
+import asyncio
+from pydantic import BaseModel
+from fast_rabbit import FastRabbitEngine
+
+from typing import Optional
+
+
+RABBIT_MQ_URL = "amqp://user:password@localhost"
+fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
+
+class Message(BaseModel):
+    name: str
+    price: int
+    is_offer: Optional[bool]
+
+async def run_producer():
+    message = Message(name="hello", pice=10)
+    await fast_rabbit.publish("test_queue", message)
+    print(f"Published message {i}")
+
+
+if __name__ == "__main__":
+    asyncio.run(fast_rabbit.run())
+```
+
+### Consuming Messages
+
+```python
+import asyncio
+from pydantic import BaseModel
+from fast_rabbit import FastRabbitEngine
+
+
+RABBIT_MQ_URL = "amqp://user:password@localhost"
+fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
+
+class Message(BaseModel):
+    name: str
+    price: int
+    is_offer: Optional[bool]
+
+@fast_rabbit.subscribe("test_queue")
+async def test_consumer(message: Message):
+    print(f"Message name: {message.name}")
+    print(f"Message price: {message.price}")
+    if message.is_offer:
+        print("Message is offer")
+
+
+if __name__ == "__main__":
+    asyncio.run(fast_rabbit.run())
+```
 ## Documentation
 
 For more detailed documentation, including API reference and advanced usage, please refer to the [Fast Rabbit Documentation](./documentation/DOCUMENTATION.md).
