@@ -1,19 +1,26 @@
 import asyncio
 import pytest
+from pydantic import BaseModel
 from fast_rabbit.fast_rabbit import FastRabbitEngine
+
+
+class User(BaseModel):
+    name: str
+    age: int
 
 
 @pytest.mark.asyncio
 async def test_publish_and_consume_simple_str():
     amqp_url = "amqp://user:password@localhost"
     test_queue = "simple_str_test_queue"
-    test_message = "Hello, RabbitMQ!"
+    test_message = User(name="John", age=30)
 
     engine = FastRabbitEngine(amqp_url)
     test_complete = asyncio.Event()
 
-    async def simple_consumer(message: str):
-        assert message == test_message
+    async def simple_consumer(message: User):
+        assert message.age == test_message.age
+        assert message.name == test_message.name
         test_complete.set()
 
     engine.subscribe(test_queue)(simple_consumer)
