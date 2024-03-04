@@ -1,9 +1,8 @@
 import asyncio
-import logging
 from aio_pika import connect_robust
 from aio_pika.exceptions import AMQPException
 
-logger = logging.getLogger(__name__)
+from fast_rabbit import logger
 
 
 class ConnectionManager:

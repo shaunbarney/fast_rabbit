@@ -1,12 +1,10 @@
-import logging
 from pydantic import BaseModel
 from aio_pika import Message, DeliveryMode
 from aio_pika.exceptions import AMQPException
 
+from fast_rabbit import logger
 from .utils import serialise_data
 from .channel_manager import ChannelManager
-
-logger = logging.getLogger(__name__)
 
 
 class MessagePublisher:

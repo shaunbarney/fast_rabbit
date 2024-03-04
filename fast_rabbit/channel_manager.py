@@ -2,7 +2,8 @@ import logging
 from aio_pika.abc import AbstractChannel
 from aio_pika.exceptions import AMQPException
 
-from .connection_manager import ConnectionManager
+from fast_rabbit import logger
+from fast_rabbit.connection_manager import ConnectionManager
 
 
 logger = logging.getLogger(__name__)

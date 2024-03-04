@@ -1,11 +1,9 @@
-import logging
 import inspect
 from pydantic import BaseModel
 from aio_pika.exceptions import AMQPException
 
+from fast_rabbit import logger
 from .channel_manager import ChannelManager
-
-logger = logging.getLogger(__name__)
 
 
 class ConsumerManager:

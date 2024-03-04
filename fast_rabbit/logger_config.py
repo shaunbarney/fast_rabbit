@@ -32,4 +32,4 @@ def setup_logger(name):
 
 
 # Create a global logger instance for the application
-app_logger = setup_logger("app_logger")
+logger = setup_logger("FastRabbit")

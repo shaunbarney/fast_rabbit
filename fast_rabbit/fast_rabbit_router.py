@@ -1,14 +1,9 @@
 import inspect
-import logging
 from pydantic import BaseModel, ValidationError
 
+from fast_rabbit import logger
+
 from typing import Awaitable, Callable, Dict, Any, Optional, Type
-
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
 
 
 class FastRabbitRouter:

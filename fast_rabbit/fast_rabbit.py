@@ -2,17 +2,12 @@ import asyncio
 import logging
 from typing import Optional
 
-from .fast_rabbit_router import FastRabbitRouter
-from .connection_manager import ConnectionManager
-from .channel_manager import ChannelManager
-from .message_publisher import MessagePublisher
-from .consumer_manager import ConsumerManager
-
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+from fast_rabbit import logger
+from fast_rabbit.fast_rabbit_router import FastRabbitRouter
+from fast_rabbit.connection_manager import ConnectionManager
+from fast_rabbit.channel_manager import ChannelManager
+from fast_rabbit.message_publisher import MessagePublisher
+from fast_rabbit.consumer_manager import ConsumerManager
 
 
 class FastRabbitEngine:
