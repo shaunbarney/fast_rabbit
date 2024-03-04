@@ -97,6 +97,8 @@ import asyncio
 from pydantic import BaseModel
 from fast_rabbit import FastRabbitEngine
 
+from typing import Optional
+
 
 RABBIT_MQ_URL = "amqp://user:password@localhost"
 fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
