@@ -1,8 +1,8 @@
 import asyncio
 import logging
 from typing import Optional
-from build.lib.fast_rabbit.fast_rabbit_router import FastRabbitRouter
 
+from .fast_rabbit_router import FastRabbitRouter
 from .connection_manager import ConnectionManager
 from .channel_manager import ChannelManager
 from .message_publisher import MessagePublisher
