@@ -64,6 +64,8 @@ if __name__ == "__main__":
 
 ## Example Upgrade
 
+In this example, we demonstrate the utilisation of message prioritisation, prefetch count, and Pydantic modelling to enhance the efficiency and organisation of message handling within your application. By assigning priority levels to messages, critical tasks can be expedited, ensuring they are processed ahead of less urgent ones, thereby optimising system responsiveness. The prefetch count feature allows for the adjustment of the number of messages prefetched by the consumer, balancing the workload and improving processing throughput. Furthermore, incorporating Pydantic models facilitates the validation and (de)serialisation of message data, ensuring that messages conform to a predefined schema. This integration not only streamlines message handling by leveraging automatic data validation and casting but also significantly enhances the developer experience through improved code quality and maintainability. Through the adept application of these features, Fast Rabbit provides a robust framework for building sophisticated, reliable messaging solutions tailored to your specific requirements.
+
 ### Publish Message
 
 ```python
@@ -71,25 +73,27 @@ import asyncio
 from pydantic import BaseModel
 from fast_rabbit import FastRabbitEngine
 
-from typing import Optional
-
-
-RABBIT_MQ_URL = "amqp://user:password@localhost"
-fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
-
 class Message(BaseModel):
     name: str
     price: int
-    is_offer: Optional[bool]
+    is_offer: Optional[bool] = None
 
 async def run_producer():
-    message = Message(name="hello", pice=10)
-    await fast_rabbit.publish("test_queue", message)
-    print(f"Published message {i}")
-
+    fast_rabbit = FastRabbitEngine(amqp_url="amqp://user:password@localhost")
+    
+    high_priority_message = Message(name="Urgent", price=100, is_offer=True)
+    low_priority_message = Message(name="Regular", price=50, is_offer=False)
+    
+    # Publish a high priority message
+    await fast_rabbit.publish("test_queue", high_priority_message.dict(), priority=5)
+    print("Published high priority message")
+    
+    # Publish a low priority message
+    await fast_rabbit.publish("test_queue", low_priority_message.dict(), priority=1)
+    print("Published low priority message")
 
 if __name__ == "__main__":
-    asyncio.run(fast_rabbit.run())
+    asyncio.run(run_producer())
 ```
 
 ### Consuming Messages
@@ -99,24 +103,19 @@ import asyncio
 from pydantic import BaseModel
 from fast_rabbit import FastRabbitEngine
 
-from typing import Optional
-
-
-RABBIT_MQ_URL = "amqp://user:password@localhost"
-fast_rabbit = FastRabbitEngine(RABBIT_MQ_URL)
-
 class Message(BaseModel):
     name: str
     price: int
-    is_offer: Optional[bool]
+    is_offer: Optional[bool] = None
 
-@fast_rabbit.subscribe("test_queue")
+fast_rabbit = FastRabbitEngine(amqp_url="amqp://user:password@localhost")
+
+@fast_rabbit.subscribe("test_queue", prefetch_count=10)
 async def test_consumer(message: Message):
     print(f"Message name: {message.name}")
     print(f"Message price: {message.price}")
     if message.is_offer:
-        print("Message is offer")
-
+        print("Message is an offer")
 
 if __name__ == "__main__":
     asyncio.run(fast_rabbit.run())
