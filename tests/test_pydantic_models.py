@@ -12,7 +12,7 @@ class User(BaseModel):
 @pytest.mark.asyncio
 async def test_publish_and_consume_simple_str():
     amqp_url = "amqp://user:password@localhost"
-    test_queue = "simple_str_test_queue"
+    test_queue = "pydantic_model_test_queue"
     test_message = User(name="John", age=30)
 
     engine = FastRabbitEngine(amqp_url)

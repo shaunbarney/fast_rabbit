@@ -69,7 +69,7 @@ class FastRabbitEngine:
         await self.channel_manager.close_channels()
         await self.connection_manager.close_connection()
 
-    def subscribe(self, queue_name: str) -> Any:
+    def subscribe(self, queue_name: str, prefetch_count: int = 1) -> Any:
         """Registers a consumer function for a specific queue.
 
         Args:
@@ -78,7 +78,7 @@ class FastRabbitEngine:
         Returns:
             A decorator function for registering the consumer handler.
         """
-        return self.consumer_manager.subscribe(queue_name)
+        return self.consumer_manager.subscribe(queue_name, prefetch_count)
 
     async def publish(self, queue_name: str, data: Any, priority: int = 0) -> None:
         """Publishes a message to a specified queue.
