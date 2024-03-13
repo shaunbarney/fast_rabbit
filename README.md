@@ -85,11 +85,11 @@ async def run_producer():
     low_priority_message = Message(name="Regular", price=50, is_offer=False)
     
     # Publish a high priority message
-    await fast_rabbit.publish("test_queue", high_priority_message.dict(), priority=5)
+    await fast_rabbit.publish("test_queue", high_priority_message, priority=5)
     print("Published high priority message")
     
     # Publish a low priority message
-    await fast_rabbit.publish("test_queue", low_priority_message.dict(), priority=1)
+    await fast_rabbit.publish("test_queue", low_priority_message, priority=1)
     print("Published low priority message")
 
 if __name__ == "__main__":
