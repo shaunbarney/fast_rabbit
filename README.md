@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
 ## Example Upgrade
 
-In this example, we demonstrate the utilisation of message prioritisation, prefetch count, and Pydantic modelling to enhance the efficiency and organisation of message handling within your application. By assigning priority levels to messages, critical tasks can be expedited, ensuring they are processed ahead of less urgent ones, thereby optimising system responsiveness. The prefetch count feature allows for the adjustment of the number of messages prefetched by the consumer, balancing the workload and improving processing throughput. Furthermore, incorporating Pydantic models facilitates the validation and (de)serialisation of message data, ensuring that messages conform to a predefined schema. This integration not only streamlines message handling by leveraging automatic data validation and casting but also significantly enhances the developer experience through improved code quality and maintainability. Through the adept application of these features, Fast Rabbit provides a robust framework for building sophisticated, reliable messaging solutions tailored to your specific requirements.
+In this example, we showcase how message prioritisation, prefetch count, and Pydantic modelling can streamline message handling in Fast Rabbit. Prioritisation ensures urgent messages are processed first, enhancing system responsiveness. The prefetch count optimises workload by controlling how many messages are processed concurrently. Pydantic models validate and structure message data, improving code quality and maintainability. Together, these features form a robust framework for efficient, reliable messaging tailored to specific application needs.
 
 ### Publish Message
 
