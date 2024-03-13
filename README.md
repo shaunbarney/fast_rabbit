@@ -8,6 +8,8 @@ Fast Rabbit is an advanced, asynchronous RabbitMQ client designed to simplify th
 - **Easy Consumer Registration**: Utilize decorators to effortlessly register message consumer coroutines.
 - **Automatic Connection Management**: Handles connection and channel lifecycle, including reconnections.
 - **Flexible Routing**: Incorporate a router similar to FastAPI for organised message handling based on queue names.
+- **Prefetch Control**: Easily configure the prefetch count for consumers to optimize message throughput and consumer workload.
+- **Message Prioritisation**: Supports prioritising messages to ensure that critical messages are processed before others, enhancing the responsiveness and efficiency of applications.
 
 ## Installation
 
