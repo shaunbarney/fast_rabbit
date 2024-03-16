@@ -19,9 +19,9 @@
   </a>
 </p>
 
-# Fast Rabbit: Asynchronous RabbitMQ Client for Python
-
-Fast Rabbit is an advanced, asynchronous RabbitMQ client designed to simplify the integration and management of RabbitMQ interactions within your Python applications. Leveraging the power of `asyncio` and `aio_pika`, Fast Rabbit provides a robust framework for message publishing and consuming, with an emphasis on simplicity, efficiency, and reliability.
+<p align="center">
+Fast Rabbit is an advanced, asynchronous RabbitMQ client designed to simplify the integration and management of RabbitMQ interactions within your Python applications. Leveraging the power of <code>asyncio</code> and <code>aio_pika</code>, Fast Rabbit provides a robust framework for message publishing and consuming, with an emphasis on simplicity, efficiency, and reliability.
+</p>
 
 ## Features
 
