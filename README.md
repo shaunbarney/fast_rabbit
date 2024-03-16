@@ -5,21 +5,18 @@
 <h1 align="center">Fast Rabbit: Asynchronous RabbitMQ Client for Python</h1>
 
 <p align="center">
-  <a href="https://github.com/shaunbarney/fastrabbit/releases">
-    <img src="https://img.shields.io/github/v/release/shaunbarney/fastrabbit?include_prereleases&style=flat-square" alt="GitHub release (latest by date including pre-releases)">
+  <a href="https://github.com/shaunbarney/fast_rabbit/releases">
+    <img src="https://img.shields.io/github/v/release/shaunbarney/fast_rabbit?include_prereleases&style=flat-square" alt="GitHub release (latest by date including pre-releases)">
   </a>
-  <a href="https://github.com/shaunbarney/fastrabbit/commits/main">
-    <img src="https://img.shields.io/github/last-commit/shaunbarney/fastrabbit?style=flat-square" alt="GitHub last commit">
+  <a href="https://github.com/shaunbarney/fast_rabbit/commits/main">
+    <img src="https://img.shields.io/github/last-commit/shaunbarney/fast_rabbit?style=flat-square" alt="GitHub last commit">
   </a>
-  <a href="https://github.com/shaunbarney/fastrabbit/issues">
-    <img src="https://img.shields.io/github/issues-raw/shaunbarney/fastrabbit?style=flat-square" alt="GitHub open issues">
+  <a href="https://github.com/shaunbarney/fast_rabbit/issues">
+    <img src="https://img.shields.io/github/issues-raw/shaunbarney/fast_rabbit?style=flat-square" alt="GitHub open issues">
   </a>
   <!-- Add more badges here -->
 </p>
 
-<p align="center">
-Fast Rabbit is an advanced, asynchronous RabbitMQ client designed to simplify the integration and management of RabbitMQ interactions within your Python applications. Leveraging the power of <code>asyncio</code> and <code>aio_pika</code>, Fast Rabbit provides a robust framework for message publishing and consuming, with an emphasis on simplicity, efficiency, and reliability.
-</p>
 # Fast Rabbit: Asynchronous RabbitMQ Client for Python
 
 Fast Rabbit is an advanced, asynchronous RabbitMQ client designed to simplify the integration and management of RabbitMQ interactions within your Python applications. Leveraging the power of `asyncio` and `aio_pika`, Fast Rabbit provides a robust framework for message publishing and consuming, with an emphasis on simplicity, efficiency, and reliability.
