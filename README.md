@@ -14,7 +14,9 @@
   <a href="https://github.com/shaunbarney/fast_rabbit/issues">
     <img src="https://img.shields.io/github/issues-raw/shaunbarney/fast_rabbit?style=flat-square" alt="GitHub open issues">
   </a>
-  <!-- Add more badges here -->
+  <a href="https://github.com/shaunbarney/fast_rabbit/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/shaunbarney/fast_rabbit?style=flat-square" alt="License">
+  </a>
 </p>
 
 # Fast Rabbit: Asynchronous RabbitMQ Client for Python
