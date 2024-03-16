@@ -5,9 +5,9 @@
 <h1 align="center">Fast Rabbit: Asynchronous RabbitMQ Client for Python</h1>
 
 <p align="center">
-  <a href="https://github.com/shaunbarney/fast_rabbit/releases">
-    <img src="https://img.shields.io/github/v/release/shaunbarney/fast_rabbit?include_prereleases&style=flat-square" alt="GitHub release (latest by date including pre-releases)">
-  </a>
+  <!-- <a href="https://github.com/shaunbarney/fast_rabbit/releases"> -->
+  <!--   <img src="https://img.shields.io/github/v/release/shaunbarney/fast_rabbit?include_prereleases&style=flat-square" alt="GitHub release (latest by date including pre-releases)"> -->
+  <!-- </a> -->
   <a href="https://github.com/shaunbarney/fast_rabbit/commits/main">
     <img src="https://img.shields.io/github/last-commit/shaunbarney/fast_rabbit?style=flat-square" alt="GitHub last commit">
   </a>
