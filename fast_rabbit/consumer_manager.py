@@ -1,6 +1,5 @@
-import asyncio
 import inspect
-from typing import Callable, Dict, Awaitable, Type, Any, List
+from typing import Callable, Dict, Awaitable, Optional, Type, Any, List
 
 from aio_pika import connect, IncomingMessage
 from aio_pika.abc import AbstractIncomingMessage, AbstractChannel
@@ -9,6 +8,7 @@ from pydantic import BaseModel
 
 from fast_rabbit import logger
 from .channel_manager import ChannelManager
+from .consumer_error_handler import ConsumerErrorHandler
 
 
 class ConsumerManager:
@@ -30,7 +30,12 @@ class ConsumerManager:
         self.channel_manager: ChannelManager = channel_manager
         self.subscriptions: Dict[str, Dict[str, Any]] = {}
 
-    def subscribe(self, queue_name: str, prefetch_count: int = 1) -> Callable:
+    def subscribe(
+        self,
+        queue_name: str,
+        prefetch_count: int = 1,
+        consumer_error_handler: Optional[ConsumerErrorHandler] = None,
+    ) -> Callable:
         """Registers a coroutine as a consumer for a specified queue with a prefetch count.
 
         Decorates a coroutine to be used as a message handler for the specified queue, supporting automatic deserialization into Pydantic models if specified.
@@ -49,6 +54,7 @@ class ConsumerManager:
             self.subscriptions[queue_name] = {
                 "handler": func,
                 "prefetch_count": prefetch_count,
+                "ConsumerErrorHandler": consumer_error_handler,
             }
             return func
 
@@ -66,6 +72,14 @@ class ConsumerManager:
             AMQPException: If there is an error declaring the queue or starting the consumer.
         """
         channel: AbstractChannel = await self.channel_manager.get_channel()
+        consumer_error_handler = self.subscriptions[queue_name].get(
+            "ConsumerErrorHandler", ConsumerErrorHandler()
+        )
+        if not self.subscriptions[queue_name].get("ConsumerErrorHandler"):
+            self.subscriptions[queue_name][
+                "ConsumerErrorHandler"
+            ] = consumer_error_handler
+
         await channel.set_qos(
             prefetch_count=self.subscriptions[queue_name]["prefetch_count"]
         )
@@ -86,15 +100,22 @@ class ConsumerManager:
                     if issubclass(param.annotation, BaseModel):
                         model_type = param.annotation
                         break
+
                 if model_type:
                     data = model_type.parse_raw(message.body.decode())
                 else:
                     data = message.body.decode()
+
+                # The try block is specifically around the handler call
                 await handler(data)
-                await message.ack()
+
             except Exception as e:
                 logger.error(f"Error processing message for '{queue_name}': {e}")
-                # Consider requeuing or dead-lettering the message here
+                # Use the ConsumerErrorHandler to handle the error
+                await consumer_error_handler.handle_error(e, message, channel)
+            else:
+                # Acknowledge the message if processed successfully
+                await message.ack()
 
         await queue.consume(message_handler)
 
