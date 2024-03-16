@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/logo.jpeg" alt="Fast Rabbit Logo" width="400"/>
+  <img src="./assets/logo.png" alt="Fast Rabbit Logo" width="400"/>
 </p>
 
 <h1 align="center">Fast Rabbit: Asynchronous RabbitMQ Client for Python</h1>
