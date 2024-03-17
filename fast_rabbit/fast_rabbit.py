@@ -107,5 +107,9 @@ class FastRabbitEngine:
         Args:
             router (FastRabbitRouter): The router containing subscriptions to include.
         """
-        for queue_name, handler in router.subscriptions.items():
-            self.subscribe(queue_name)(handler)
+        for queue_name, subscription in router.subscriptions.items():
+            self.subscribe(
+                queue_name,
+                subscription["prefetch_count"],
+                subscription["consumer_error_handler"],
+            )(subscription["handler"])

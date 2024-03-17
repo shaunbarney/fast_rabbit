@@ -2,6 +2,7 @@ import inspect
 from pydantic import BaseModel, ValidationError
 
 from fast_rabbit import logger
+from fast_rabbit.consumer_error_handler import ConsumerErrorHandler
 
 from typing import Awaitable, Callable, Dict, Any, Optional, Type
 
@@ -20,47 +21,34 @@ class FastRabbitRouter:
 
     def __init__(self) -> None:
         """Initializes a new FastRabbitRouter instance with an empty subscriptions dictionary."""
-        self.subscriptions: Dict[str, Callable[..., Awaitable[None]]] = {}
+        self.subscriptions: Dict[str, Dict[str, Any]] = {}
 
     def subscribe(
-        self, queue_name: str
-    ) -> Callable[[Callable[..., Awaitable[Any]]], Callable[..., Any]]:
-        """Registers a coroutine as a consumer for a specified queue with optional Pydantic model deserialization.
+        self,
+        queue_name: str,
+        prefetch_count: int = 1,
+        consumer_error_handler: Optional[ConsumerErrorHandler] = None,
+    ) -> Callable:
+        """Registers a coroutine as a consumer for a specified queue with a prefetch count.
+
+        Decorates a coroutine to be used as a message handler for the specified queue, supporting automatic deserialization into Pydantic models if specified.
 
         Args:
             queue_name: The name of the queue for which the consumer is being registered.
+            prefetch_count: The number of messages to prefetch for batch processing.
 
         Returns:
-            A decorator function that takes a coroutine, wraps it to include automatic
-            deserialization of messages, and registers the wrapped coroutine as a consumer
-            for the specified queue.
+            A decorator that registers the coroutine as a consumer for the specified queue.
         """
 
-        def decorator(func: Callable[..., Awaitable[Any]]) -> Callable[..., Any]:
-            params = inspect.signature(func).parameters
-            model_type: Optional[Type[BaseModel]] = None
-            for param in params.values():
-                if isinstance(param.annotation, type) and issubclass(
-                    param.annotation, BaseModel
-                ):
-                    model_type = param.annotation
-                    break
-
-            async def wrapper(message_body: str) -> None:
-                """Deserializes message before passing to the consumer if a Pydantic model is expected."""
-                data = message_body
-                if model_type:
-                    try:
-                        data = model_type.parse_raw(message_body)
-                    except ValidationError as e:
-                        logger.error(
-                            f"Error parsing message into model {model_type}: {e}"
-                        )
-                        return
-
-                await func(data)
-
-            self.subscriptions[queue_name] = wrapper
+        def decorator(
+            func: Callable[..., Awaitable[None]]
+        ) -> Callable[..., Awaitable[None]]:
+            self.subscriptions[queue_name] = {
+                "handler": func,
+                "prefetch_count": prefetch_count,
+                "consumer_error_handler": consumer_error_handler,
+            }
             return func
 
         return decorator

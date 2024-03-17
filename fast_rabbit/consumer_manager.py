@@ -54,7 +54,7 @@ class ConsumerManager:
             self.subscriptions[queue_name] = {
                 "handler": func,
                 "prefetch_count": prefetch_count,
-                "ConsumerErrorHandler": consumer_error_handler,
+                "consumer_error_handler": consumer_error_handler,
             }
             return func
 
@@ -73,11 +73,11 @@ class ConsumerManager:
         """
         channel: AbstractChannel = await self.channel_manager.get_channel()
         consumer_error_handler = self.subscriptions[queue_name].get(
-            "ConsumerErrorHandler", ConsumerErrorHandler()
+            "consumer_error_handler", ConsumerErrorHandler()
         )
-        if not self.subscriptions[queue_name].get("ConsumerErrorHandler"):
+        if not self.subscriptions[queue_name].get("consumer_error_handler"):
             self.subscriptions[queue_name][
-                "ConsumerErrorHandler"
+                "consumer_error_handler"
             ] = consumer_error_handler
 
         await channel.set_qos(
@@ -112,7 +112,8 @@ class ConsumerManager:
             except Exception as e:
                 logger.error(f"Error processing message for '{queue_name}': {e}")
                 # Use the ConsumerErrorHandler to handle the error
-                await consumer_error_handler.handle_error(e, message, channel)
+                if consumer_error_handler:
+                    await consumer_error_handler.handle_error(e, message, channel)
             else:
                 # Acknowledge the message if processed successfully
                 await message.ack()
