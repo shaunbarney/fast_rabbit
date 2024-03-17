@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="fast_rabbit",
-    version="0.1.16",
+    version="0.1.17",
     packages=find_packages(),
     install_requires=[
         "aio_pika",
