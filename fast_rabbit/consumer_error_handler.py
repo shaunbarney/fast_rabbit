@@ -62,7 +62,7 @@ class ConsumerErrorHandler:
         if retry_count < self.max_retries:
             await self._retry_message(message, retry_count, channel)
         else:
-            await self._dead_letter_message(message)
+            await self._dead_letter_message(message, channel)
             logger.error(
                 f"Message dead-lettered after {self.max_retries} retries: {error}"
             )
@@ -100,7 +100,9 @@ class ConsumerErrorHandler:
             routing_key=routing_key,
         )
 
-    async def _dead_letter_message(self, message: AbstractIncomingMessage) -> None:
+    async def _dead_letter_message(
+        self, message: AbstractIncomingMessage, channel: AbstractChannel
+    ) -> None:
         """
         Moves a message to a dead-letter queue after retries are exhausted.
 
@@ -109,7 +111,7 @@ class ConsumerErrorHandler:
         """
         logger.info(f"Dead-lettering message {message.message_id}.")
         # Publish the message to the dead-letter exchange
-        await self.channel.default_exchange.publish(
+        await channel.default_exchange.publish(
             Message(body=message.body, headers=message.headers),
             routing_key=self.dead_letter_exchange,
         )
