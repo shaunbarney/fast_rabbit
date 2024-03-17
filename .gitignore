@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 Makefile
 personal_testing
+.bumpversion.cfg

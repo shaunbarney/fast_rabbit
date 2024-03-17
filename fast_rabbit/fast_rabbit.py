@@ -10,12 +10,14 @@ Example:
 """
 
 import asyncio
+from ssl import Options
 
 from fast_rabbit.fast_rabbit_router import FastRabbitRouter
 from fast_rabbit.connection_manager import ConnectionManager
 from fast_rabbit.channel_manager import ChannelManager
 from fast_rabbit.message_publisher import MessagePublisher
 from fast_rabbit.consumer_manager import ConsumerManager
+from fast_rabbit.consumer_error_handler import ConsumerErrorHandler
 
 from typing import Optional, Any
 
@@ -69,16 +71,25 @@ class FastRabbitEngine:
         await self.channel_manager.close_channels()
         await self.connection_manager.close_connection()
 
-    def subscribe(self, queue_name: str, prefetch_count: int = 1) -> Any:
+    def subscribe(
+        self,
+        queue_name: str,
+        prefetch_count: int = 1,
+        consumer_error_handler: Optional[ConsumerErrorHandler] = None,
+    ) -> Any:
         """Registers a consumer function for a specific queue.
 
         Args:
             queue_name (str): The name of the queue for which to register the consumer.
+            prefetch_count (int, optional): The number of messages to prefetch for batch processing. Defaults to 1.
+            consumer_error_handler (Optional[ConsumerErrorHandler], optional): The error handler for the consumer. Defaults to None and then uses default setting for consumer error handling.
 
         Returns:
             A decorator function for registering the consumer handler.
         """
-        return self.consumer_manager.subscribe(queue_name, prefetch_count)
+        return self.consumer_manager.subscribe(
+            queue_name, prefetch_count, consumer_error_handler
+        )
 
     async def publish(self, queue_name: str, data: Any, priority: int = 0) -> None:
         """Publishes a message to a specified queue.
